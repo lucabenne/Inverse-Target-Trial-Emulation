@@ -1,0 +1,146 @@
+model {
+
+  for (i in 1:N) {
+
+    # Sequential baseline-covariate model
+    female[i] ~ dbin(theta0, 1)
+    z_female[i] <- (female[i] - center_female) / scale_female
+
+    mu_daysdrink[i] <- beta_drink[1] +
+                       beta_drink[2] * z_female[i]
+    daysdrink[i] ~ dnorm(mu_daysdrink[i], tau_daysdrink) T(0, )
+    z_daysdrink[i] <- (daysdrink[i] - center_daysdrink) / scale_daysdrink
+
+    mu_daysanysub[i] <- beta_sub[1] +
+                        beta_sub[2] * z_female[i] +
+                        beta_sub[3] * z_daysdrink[i]
+    daysanysub[i] ~ dnorm(mu_daysanysub[i], tau_daysanysub) T(0, )
+    z_daysanysub[i] <- (daysanysub[i] - center_daysanysub) / scale_daysanysub
+
+    mu_pcs[i] <- beta_pcs[1] +
+                 beta_pcs[2] * z_female[i] +
+                 beta_pcs[3] * z_daysdrink[i] +
+                 beta_pcs[4] * z_daysanysub[i]
+    pcs[i] ~ dnorm(mu_pcs[i], tau_pcs) T(14, 75)
+    z_pcs[i] <- (pcs[i] - center_pcs) / scale_pcs
+
+    mu_mcs[i] <- beta_mcs[1] +
+                 beta_mcs[2] * z_female[i] +
+                 beta_mcs[3] * z_daysdrink[i] +
+                 beta_mcs[4] * z_daysanysub[i] +
+                 beta_mcs[5] * z_pcs[i]
+    mcs[i] ~ dnorm(mu_mcs[i], tau_mcs) T(6.6, 62)
+    z_mcs[i] <- (mcs[i] - center_mcs) / scale_mcs
+
+    # CES-D, sexual-risk and drug-risk are bounded scores.  A binomial model
+    # was too restrictive for their empirical dispersion, so they are modelled
+    # as bounded Gaussian scores with an estimated residual SD.
+    mu_cesd[i] <- beta_cesd[1] +
+                  beta_cesd[2] * z_female[i] +
+                  beta_cesd[3] * z_daysdrink[i] +
+                  beta_cesd[4] * z_daysanysub[i] +
+                  beta_cesd[5] * z_pcs[i] +
+                  beta_cesd[6] * z_mcs[i]
+    cesd[i] ~ dnorm(mu_cesd[i], tau_cesd) T(0, 60)
+    z_cesd[i] <- (cesd[i] - center_cesd) / scale_cesd
+
+    mu_sexrisk[i] <- beta_sexrisk[1] +
+                     beta_sexrisk[2] * z_female[i] +
+                     beta_sexrisk[3] * z_daysdrink[i] +
+                     beta_sexrisk[4] * z_daysanysub[i] +
+                     beta_sexrisk[5] * z_pcs[i] +
+                     beta_sexrisk[6] * z_mcs[i] +
+                     beta_sexrisk[7] * z_cesd[i]
+    sexrisk[i] ~ dnorm(mu_sexrisk[i], tau_sexrisk) T(0, 21)
+    z_sexrisk[i] <- (sexrisk[i] - center_sexrisk) / scale_sexrisk
+
+    mu_drugrisk[i] <- beta_drugrisk[1] +
+                      beta_drugrisk[2] * z_female[i] +
+                      beta_drugrisk[3] * z_daysdrink[i] +
+                      beta_drugrisk[4] * z_daysanysub[i] +
+                      beta_drugrisk[5] * z_pcs[i] +
+                      beta_drugrisk[6] * z_mcs[i] +
+                      beta_drugrisk[7] * z_cesd[i] +
+                      beta_drugrisk[8] * z_sexrisk[i]
+    drugrisk[i] ~ dnorm(mu_drugrisk[i], tau_drugrisk) T(0, 21)
+    z_drugrisk[i] <- (drugrisk[i] - center_drugrisk) / scale_drugrisk
+
+    # Outcome model
+    mu_dayslink[i] <- theta90 +
+                      theta91 * treat[i] +
+                      theta92 * z_daysdrink[i] +
+                      theta93 * z_daysanysub[i] +
+                      theta94 * z_female[i] +
+                      theta95 * z_pcs[i] +
+                      theta96 * z_mcs[i] +
+                      theta97 * z_cesd[i] +
+                      theta98 * z_sexrisk[i] +
+                      theta99 * z_drugrisk[i]
+
+    dayslink[i] ~ dnorm(mu_dayslink[i], tau_dayslink) T(0, )
+  }
+
+  theta0 ~ dbeta(1, 1)
+
+  beta_drink[1] ~ dnorm(prior_mean_daysdrink, prior_prec_daysdrink)
+  beta_drink[2] ~ dnorm(0, prior_prec_daysdrink)
+
+  beta_sub[1] ~ dnorm(prior_mean_daysanysub, prior_prec_daysanysub)
+  for (j in 2:3) {
+    beta_sub[j] ~ dnorm(0, prior_prec_daysanysub)
+  }
+
+  beta_pcs[1] ~ dnorm(prior_mean_pcs, prior_prec_pcs)
+  for (j in 2:4) {
+    beta_pcs[j] ~ dnorm(0, prior_prec_pcs)
+  }
+
+  beta_mcs[1] ~ dnorm(prior_mean_mcs, prior_prec_mcs)
+  for (j in 2:5) {
+    beta_mcs[j] ~ dnorm(0, prior_prec_mcs)
+  }
+
+  beta_cesd[1] ~ dnorm(prior_mean_cesd, prior_prec_cesd)
+  for (j in 2:6) {
+    beta_cesd[j] ~ dnorm(0, prior_prec_cesd)
+  }
+
+  beta_sexrisk[1] ~ dnorm(prior_mean_sexrisk, prior_prec_sexrisk)
+  for (j in 2:7) {
+    beta_sexrisk[j] ~ dnorm(0, prior_prec_sexrisk)
+  }
+
+  beta_drugrisk[1] ~ dnorm(prior_mean_drugrisk, prior_prec_drugrisk)
+  for (j in 2:8) {
+    beta_drugrisk[j] ~ dnorm(0, prior_prec_drugrisk)
+  }
+
+  theta90 ~ dnorm(prior_mean_dayslink, prior_prec_dayslink)
+  theta91 ~ dnorm(0, prior_prec_dayslink)
+  theta92 ~ dnorm(0, prior_prec_dayslink)
+  theta93 ~ dnorm(0, prior_prec_dayslink)
+  theta94 ~ dnorm(0, prior_prec_dayslink)
+  theta95 ~ dnorm(0, prior_prec_dayslink)
+  theta96 ~ dnorm(0, prior_prec_dayslink)
+  theta97 ~ dnorm(0, prior_prec_dayslink)
+  theta98 ~ dnorm(0, prior_prec_dayslink)
+  theta99 ~ dnorm(0, prior_prec_dayslink)
+
+  sigma_daysdrink ~ dunif(0, sigma_upper_daysdrink)
+  sigma_daysanysub ~ dunif(0, sigma_upper_daysanysub)
+  sigma_pcs ~ dunif(0, sigma_upper_pcs)
+  sigma_mcs ~ dunif(0, sigma_upper_mcs)
+  sigma_cesd ~ dunif(0, sigma_upper_cesd)
+  sigma_sexrisk ~ dunif(0, sigma_upper_sexrisk)
+  sigma_drugrisk ~ dunif(0, sigma_upper_drugrisk)
+  sigma_dayslink ~ dunif(0, sigma_upper_dayslink)
+
+  tau_daysdrink <- pow(sigma_daysdrink, -2)
+  tau_daysanysub <- pow(sigma_daysanysub, -2)
+  tau_pcs <- pow(sigma_pcs, -2)
+  tau_mcs <- pow(sigma_mcs, -2)
+  tau_cesd <- pow(sigma_cesd, -2)
+  tau_sexrisk <- pow(sigma_sexrisk, -2)
+  tau_drugrisk <- pow(sigma_drugrisk, -2)
+  tau_dayslink <- pow(sigma_dayslink, -2)
+}

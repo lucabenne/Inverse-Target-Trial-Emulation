@@ -1,0 +1,132 @@
+model{
+
+for(i in 1:N){
+
+# -----------------------------------------------------------------------------
+# Sequential baseline-covariate model
+# p(age)
+# p(menostat | age)
+# p(tsize | age, menostat)
+# p(tgrade | age, menostat, tsize)
+# p(pnodes | age, menostat, tsize, tgrade)
+# p(progrec | age, menostat, tsize, tgrade, pnodes)
+# p(estrec | age, menostat, tsize, tgrade, pnodes, progrec)
+# -----------------------------------------------------------------------------
+
+# Age: same lower-truncated Normal family as the original implementation.
+age[i] ~ dnorm(theta0,pow(sigma0,-2))T(20, )
+
+# Menopausal status: same probit Bernoulli model as the original implementation.
+menostat[i] ~ dbern(p_meno[i])
+probit(p_meno[i]) <- theta10 + theta11*(age[i]-mean(age))
+
+# Tumour size: lower-truncated Normal, now conditional on all previous covariates.
+tsize[i] ~ dnorm(
+  theta2 +
+  theta21*(age[i]-mean(age)) +
+  theta22*(menostat[i]-mean(menostat)),
+  pow(sigma2,-2)
+)T(0, )
+
+# Tumour grade is an ordered 3-level variable with observed support {1,2,3}.
+# A proportional-odds model allows the large middle category observed in GBSG2,
+# unlike the previous shifted-Binomial approximation.
+eta_grade[i] <-
+  theta31*(age[i]-mean(age)) +
+  theta32*(menostat[i]-mean(menostat)) +
+  theta33*(tsize[i]-mean(tsize))
+
+grade_cdf1[i] <- ilogit(grade_cut1 - eta_grade[i])
+grade_cdf2[i] <- ilogit(grade_cut2 - eta_grade[i])
+
+grade_p[i,1] <- grade_cdf1[i]
+grade_p[i,2] <- grade_cdf2[i] - grade_cdf1[i]
+grade_p[i,3] <- 1 - grade_cdf2[i]
+
+tgrade[i] ~ dcat(grade_p[i,1:3])
+
+# Positive node count: retain the lower-truncated Normal family and full
+# sequential conditioning.
+pnodes[i] ~ dnorm(
+  theta40 +
+  theta41*(tsize[i]-mean(tsize)) +
+  theta42*(age[i]-mean(age)) +
+  theta43*(menostat[i]-mean(menostat)) +
+  theta44*(tgrade[i]-mean(tgrade)),
+  pow(sigma4,-2)
+)T(0, )
+
+# Progesterone and estrogen receptor measurements are strongly right-skewed.
+# We model their square-root transforms with lower-truncated Normal conditionals.
+# This preserves non-negative support while allowing skewness without the
+# extremely heavy posterior-predictive tails produced by an exponential back-transform.
+sqrt_progrec[i] ~ dnorm(
+  theta5 +
+  theta51*(age[i]-mean(age)) +
+  theta52*(menostat[i]-mean(menostat)) +
+  theta53*(tsize[i]-mean(tsize)) +
+  theta54*(tgrade[i]-mean(tgrade)) +
+  theta55*(pnodes[i]-mean(pnodes)),
+  pow(sigma5,-2)
+)T(0, )
+
+sqrt_estrec[i] ~ dnorm(
+  theta6 +
+  theta61*(age[i]-mean(age)) +
+  theta62*(menostat[i]-mean(menostat)) +
+  theta63*(tsize[i]-mean(tsize)) +
+  theta64*(tgrade[i]-mean(tgrade)) +
+  theta65*(pnodes[i]-mean(pnodes)) +
+  theta66*(sqrt_progrec[i]-mean(sqrt_progrec)),
+  pow(sigma6,-2)
+)T(0, )
+}
+
+# Ordered cutpoints for tumour grade.
+grade_cut1 ~ dnorm(0,0.01)
+grade_delta ~ dnorm(0,0.01)T(0, )
+grade_cut2 <- grade_cut1 + grade_delta
+
+# Original location/coefficient priors retained where the scale is unchanged.
+theta0 ~ dnorm(50,0.01)
+theta10 ~ dnorm(0,0.01)
+theta11 ~ dnorm(0,0.01)
+theta2 ~ dnorm(50,0.01)T(0, )
+theta40 ~ dnorm(5,0.1)T(0, )
+theta41 ~ dnorm(0,0.1)
+
+# Added full-sequential slopes on unchanged scales.
+theta21 ~ dnorm(0,0.01)
+theta22 ~ dnorm(0,0.01)
+
+theta31 ~ dnorm(0,0.1)
+theta32 ~ dnorm(0,0.1)
+theta33 ~ dnorm(0,0.1)
+
+theta42 ~ dnorm(0,0.1)
+theta43 ~ dnorm(0,0.1)
+theta44 ~ dnorm(0,0.1)
+
+# Square-root receptor models: weak priors on the transformed scale.
+theta5 ~ dnorm(10,0.01)
+theta51 ~ dnorm(0,1)
+theta52 ~ dnorm(0,1)
+theta53 ~ dnorm(0,1)
+theta54 ~ dnorm(0,1)
+theta55 ~ dnorm(0,1)
+
+theta6 ~ dnorm(10,0.01)
+theta61 ~ dnorm(0,1)
+theta62 ~ dnorm(0,1)
+theta63 ~ dnorm(0,1)
+theta64 ~ dnorm(0,1)
+theta65 ~ dnorm(0,1)
+theta66 ~ dnorm(0,1)
+
+# Weak priors on residual STANDARD DEVIATIONS.
+sigma0 ~ dunif(0,1000)
+sigma2 ~ dunif(0,1000)
+sigma4 ~ dunif(0,1000)
+sigma5 ~ dunif(0,100)
+sigma6 ~ dunif(0,100)
+}
