@@ -13,7 +13,7 @@ source("99_GBSG2_diagnostic_helpers.R")
 
 q_levels <- c(0.50, 0.65, 0.80, 0.95)
 N_add <- 100L
-n_rep <- 30L
+n_rep <- 1000L
 
 index_additional <- c(1,2,3,9,10)
 Ma_source <- pairwise_mahalanobis(datt, index_additional)
