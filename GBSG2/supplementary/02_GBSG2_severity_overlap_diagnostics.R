@@ -14,7 +14,7 @@ if (!exists("weib", inherits = FALSE) || !exists("BG", inherits = FALSE)) {
 source("99_GBSG2_diagnostic_helpers.R")
 
 N_levels <- c(20L,40L,60L,80L,100L)
-n_rep <- 30L
+n_rep <- 1000L
 q_additional <- 0.80
 x_decoupling <- "pnodes"
 nsim <- 1000L
