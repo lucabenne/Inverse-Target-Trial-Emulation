@@ -39,7 +39,7 @@ source("../src/10_estimate_weibull_survival_model.R")
 
 iseed <- 100001L
 N_levels <- c(20L,40L,60L,80L,100L)
-n_rep <- 30L
+n_rep <- 1000L
 q_additional <- 0.80
 x_decoupling <- "pnodes"
 nsim <- 1000L
