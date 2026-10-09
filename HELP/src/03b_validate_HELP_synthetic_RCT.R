@@ -2,8 +2,8 @@ library(readr)
 library(R2jags)
 library(truncnorm)
 
-source("02_fit_HELP_bayesian_DGP.R")
-source("03a_generate_HELP_synthetic_trial.R")
+source("../src/02_fit_HELP_bayesian_DGP.R")
+source("../src/03a_generate_HELP_synthetic_trial.R")
 
 # -----------------------------------------------------------------------------
 # 1. Source HELP data
