@@ -1,10 +1,10 @@
 library(readr)
 library(truncnorm)
 
-source("10_estimate_IPW.R")
-source("08_measure_mahalanobis_imbalance.R")
-source("12_estimate_AIPW.R")
-if (!exists("HELP_generate_covariates")) source("03a_generate_HELP_synthetic_trial.R")
+source("../src/10_estimate_IPW.R")
+source("../src/08_measure_mahalanobis_imbalance.R")
+source("../src/12_estimate_AIPW.R")
+if (!exists("HELP_generate_covariates")) source("../src/03a_generate_HELP_synthetic_trial.R")
 
 observational_help2 = function(data, n, BG, gamma = 1.25){
 
