@@ -5,7 +5,7 @@
 # SMD, PS overlap, ESS / extreme weights, and pooled source-vs-final shift.
 #
 # Uses the frozen v6 GBSG2 mechanism settings:
-# N = 20,40,60,80,100; q=0.80; 30 Monte Carlo replicates.
+# N = 20,40,60,80,100; q=0.80; 1,000 Monte Carlo replicates.
 ###############################################################################
 
 if (!exists("weib", inherits = FALSE) || !exists("BG", inherits = FALSE)) {
