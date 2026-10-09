@@ -2,8 +2,8 @@ library(R2jags)
 
 generate_BG = function(data){
 
-  filein = '04_GBSG2_covariate_DGP_model.txt'
-
+filein = '../src/04_GBSG2_covariate_DGP_model.txt'
+  
   datalist=list(
     N = nrow(data),
     age = data$age,
