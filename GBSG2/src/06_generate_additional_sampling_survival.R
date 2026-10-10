@@ -151,8 +151,15 @@ newdatamahal_distr_surv2 <- function(data, bern, n, q,
     }
   }
 
-  # Preserve the integer-valued implementation used in the original scripts.
-  data_prec <- round(data_prec)
-  if(any(!data_prec$tgrade %in% 1:3)) stop("Additional Sampling generated invalid tgrade.")
-  data_prec
+# Preserve the integer-valued implementation used in the original scripts,
+# while keeping survival time continuous and strictly positive.
+time_tmp <- data_prec$time
+data_prec <- round(data_prec)
+data_prec$time <- pmax(time_tmp, 1e-6)
+
+if(any(!data_prec$tgrade %in% 1:3)) {
+  stop("Additional Sampling generated invalid tgrade.")
+}
+
+data_prec
 }
